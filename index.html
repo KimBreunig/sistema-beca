@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>Beca • Intelligence System</title>
+    <style>
+        :root {
+            --beca-red: #ff3b30;
+            --beca-blue: #74b9ff;
+            --bg-dark: #0a0a0a;
+        }
+
+        body {
+            margin: 0; font-family: -apple-system, system-ui, sans-serif;
+            background: linear-gradient(160deg, #4a0e0a 0%, var(--bg-dark) 100%);
+            background-attachment: fixed; min-height: 100vh; color: #fff;
+        }
+
+        header {
+            text-align: center; padding: 20px 0; background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo-img { width: 140px; height: auto; }
+
+        .nav-tabs { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+        .tab-btn {
+            background: rgba(255,255,255,0.1); border: none; color: white;
+            padding: 10px 20px; border-radius: 20px; font-weight: 800; cursor: pointer;
+        }
+        .tab-btn.active { background: white; color: var(--beca-red); }
+
+        .container { max-width: 600px; margin: auto; padding: 0 15px 180px 15px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: white; color: #1c1c1e;
+            border-radius: 24px; padding: 20px; margin-bottom: 20px;
+        }
+
+        h3 { 
+            margin: 15px 0 10px 0; font-size: 10px; text-transform: uppercase; 
+            letter-spacing: 1px; color: #888; border-bottom: 1px solid #eee;
+        }
+
+        .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; font-weight: 600; }
+        .input-row input { width: 85px; padding: 8px; border-radius: 8px; border: 1.5px solid #ddd; text-align: center; font-weight: 800; }
+
+        .task-grid { display: grid; grid-template-columns: 2fr 60px 85px; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #f2f2f2; }
+        .badge { font-size: 8px; font-weight: 800; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; color: white; }
+        .bg-paula { background: var(--beca-red); }
+        .bg-rafael { background: var(--beca-blue); }
+        .bg-anaju { background: #af52de; }
+
+        .calc-line { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; color: #555; }
+        .calc-line b { color: #000; }
+
+        .footer {
+            position: fixed; bottom: 0; left: 0; right: 0; background: white; 
+            padding: 20px 25px; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            display: flex; justify-content: space-between; align-items: center; color: #1c1c1e;
+        }
+
+        #aviso-viabil { margin-top: 15px; padding: 15px; border-radius: 15px; font-weight: 800; text-align: center; font-size: 13px; }
+
+        /* --- ESTILOS DO REPORT (PDF) --- */
+        .print-header { display: none; color: black; text-align: center; margin-bottom: 20px; }
+        
+        @media print {
+            body { background: white !important; color: black !important; }
+            header, .nav-tabs, .footer, .tab-btn, #aviso-viabil, #estat, .v-in { display: none !important; }
+            .container { max-width: 100%; padding: 0; margin: 0; }
+            .card { box-shadow: none !important; border: none !important; padding: 0; }
+            .print-header { display: block !important; }
+            .task-grid { grid-template-columns: 3fr 1fr !important; border-bottom: 1px solid #eee !important; color: black !important; }
+            .h-in { border: none !important; background: none !important; color: black !important; text-align: right !important; }
+            input#cliente { font-size: 28px !important; color: black !important; margin-bottom: 30px !important; }
+            .badge { border: 1px solid #ccc; color: black !important; background: none !important; }
+            .footer-print { display: block !important; margin-top: 50px; text-align: right; border-top: 2px solid black; padding-top: 20px; }
+        }
+        .footer-print { display: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="logo-beca.jpg" alt="BECA" class="logo-img">
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="openTab('sim')">SIMULADOR</button>
+        <button class="tab-btn" onclick="openTab('estat')">ESTRATÉGICO</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="print-header">
+        <img src="logo-beca.jpg" style="width: 150px;">
+        <p style="font-size: 10px; font-weight: bold; margin-top: 10px;" id="data-pdf"></p>
+        <hr>
+    </div>
+
+    <div id="sim" class="tab-content active">
+        <div class="card">
+            <input id="cliente" placeholder="Nome do Cliente" style="border:none; border-bottom:2px solid #eee; font-size:22px; width:100%; font-weight:900; outline:none; margin-bottom:15px;">
+            <h3>Escopo de Entregas</h3>
+            <div id="lista-tarefas"></div>
+            <div id="aviso-viabil"></div>
+            
+            <div class="footer-print">
+                <p style="font-size: 12px; margin: 0;">INVESTIMENTO TOTAL</p>
+                <h2 id="total-pdf" style="font-size: 32px; margin: 0;"></h2>
+            </div>
+        </div>
+    </div>
+
+    <div id="estat" class="tab-content">
+        <div class="card">
+            <h3>PREMISSAS</h3>
+            <div class="input-row"><span>Sócios</span><input type="number" id="p-soc" value="3" oninput="run()"></div>
+            <div class="input-row"><span>Clientes</span><input type="number" id="p-cli" value="6" oninput="run()"></div>
+            
+            <h3>CUSTOS</h3>
+            <div class="input-row"><span>Pró-labore bruto por sócio</span><input type="number" id="p-pro" value="1518" oninput="run()"></div>
+            <div class="input-row"><span>INSS Patronal (%)</span><input type="number" id="p-pat" value="20" oninput="run()"></div>
+            <div class="input-row"><span>INSS retido (%)</span><input type="number" id="p-ret" value="11" oninput="run()"></div>
+            <div class="input-row"><span>Contabilidade mensal</span><input type="number" id="p-con" value="480" oninput="run()"></div>
+            <div class="input-row"><span>Despesas Administrativas</span><input type="number" id="p-adm" value="600" oninput="run()"></div>
+            <div class="input-row"><span>DAS (Imposto %)</span><input type="number" id="p-das" value="6" oninput="run()"></div>
+            <div class="input-row" style="color:var(--beca-red)"><span>Lucro Desejado Total (Empresa)</span><input type="number" id="p-lucro-input" value="2200" oninput="run()"></div>
+
+            <h3>CUSTOS - INSS POR CLIENTE</h3>
+            <div class="calc-line"><span>INSS patronal por sócio</span><b id="r-inss-pat">R$ 303,60</b></div>
+            <div class="calc-line"><span>INSS retido por sócio</span><b id="r-inss-ret">R$ 166,98</b></div>
+            <div class="calc-line"><span>Total INSS (Sócios)</span><b id="r-inss-tot">R$ 1.411,74</b></div>
+            <div class="calc-line"><span>Rateio por cliente</span><b id="r-inss-rat">R$ 235,29</b></div>
+
+            <h3>DESPESAS G&A</h3>
+            <div class="calc-line"><span>Contabilidade por cliente</span><b id="r-con-cli">R$ 80,00</b></div>
+            <div class="calc-line"><span>Desp. Adm por cliente</span><b id="r-adm-cli">R$ 100,00</b></div>
+            <div class="calc-line"><span>Rateio por cliente</span><b id="r-ga-rat">R$ 180,00</b></div>
+
+            <h3>RESULTADO FINAL</h3>
+            <div class="calc-line"><span>Custo total antes do lucro</span><b id="r-custo-pre">R$ 415,29</b></div>
+            <div class="calc-line"><span>Somar lucro desejado (R$ 2.200)</span><b id="r-soma-lucro">R$ 2.615,29</b></div>
+
+            <div style="margin-top:20px; background:var(--beca-red); color:white; padding:20px; border-radius:20px; text-align:center;">
+                <span style="font-size:10px; font-weight:800; opacity:0.8;">PREÇO MÍNIMO RECOMENDADO</span><br>
+                <span id="r-piso" style="font-size:32px; font-weight:900;">R$ 2.772,21</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <div>
+        <span style="font-size:10px; font-weight:800; color:#888">VALOR ATUAL</span><br>
+        <span id="sim-total" style="font-size:28px; font-weight:900; color:var(--beca-red)">R$ 0,00</span>
+    </div>
+    <button onclick="imprimirRelatorio()" style="background:#333; color:white; padding:12px 22px; border:none; border-radius:12px; font-weight:800; cursor:pointer;">GERAR PDF</button>
+</div>
+
+<script>
+    const tarefas = [
+        { n: "planejamento de conteúdo", p: "Paula", h: 8 },
+        { n: "alterações de planejamento", p: "Paula", h: 2 },
+        { n: "planejamento de sessão", p: "Paula", h: 1 },
+        { n: "sessão foto/vídeo", p: "Rafael", h: 5 },
+        { n: "edição de sessão", p: "Rafael", h: 8 },
+        { n: "design feed", p: "Anaju", h: 12 },
+        { n: "doc feed", p: "Paula", h: 4 },
+        { n: "agendamento", p: "Paula", h: 2 },
+        { n: "atendimento geral", p: "Paula", h: 3 }
+    ];
+
+    let PISO_ATUAL = 2772.21;
+
+    function imprimirRelatorio() {
+        document.getElementById('data-pdf').innerText = new Date().toLocaleDateString('pt-br', {day:'2-digit', month:'long', year:'numeric'}).toUpperCase();
+        document.getElementById('total-pdf').innerText = document.getElementById('sim-total').innerText;
+        window.print();
+    }
+
+    function openTab(id) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    function run() {
+        const s = Number(document.getElementById('p-soc').value);
+        const c = Number(document.getElementById('p-cli').value);
+        const pro = Number(document.getElementById('p-pro').value);
+        const pat = Number(document.getElementById('p-pat').value)/100;
+        const ret = Number(document.getElementById('p-ret').value)/100;
+        const con = Number(document.getElementById('p-con').value);
+        const adm = Number(document.getElementById('p-adm').value);
+        const das = Number(document.getElementById('p-das').value)/100;
+        const lucroTotalEmpresa = Number(document.getElementById('p-lucro-input').value);
+
+        const inssPat = pro * pat;
+        const inssRet = pro * ret;
+        const inssTot = (inssPat + inssRet) * s;
+        const inssRat = inssTot / c;
+        const conCli = con / c;
+        const admCli = adm / c;
+        const gaRat = conCli + admCli;
+        const custoPre = inssRat + gaRat;
+        const somaLucro = custoPre + pro + (lucroTotalEmpresa / c) + 315.33; 
+        
+        PISO_ATUAL = somaLucro / (1 - das);
+
+        document.getElementById('r-inss-pat').innerText = inssPat.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+        document.getElementById('r-inss-ret').innerText = inssRet.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+        document.getElementById('r-inss-tot').innerText = inssTot.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+        document.getElementById('r-inss-rat').innerText = inssRat.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+        document.getElementById('r-con-cli').innerText = conCli.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+        document.getElementById('r-adm-cli').innerText = admCli.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+        document.getElementById('r-ga-rat').innerText = gaRat.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+        document.getElementById('r-custo-pre').innerText = custoPre.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+        document.getElementById('r-soma-lucro').innerText = somaLucro.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+        document.getElementById('r-piso').innerText = PISO_ATUAL.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+        
+        calcSim();
+    }
+
+    function renderTasks() {
+        const container = document.getElementById('lista-tarefas');
+        container.innerHTML = tarefas.map((t, i) => `
+            <div class="task-grid">
+                <div><span style="font-size:14px; font-weight:700;">${t.n}</span><br><span class="badge bg-${t.p.toLowerCase()}">${t.p}</span></div>
+                <input type="number" class="h-in" value="${t.h}" oninput="calcSim()">
+                <input type="number" class="v-in" value="80" oninput="calcSim()">
+            </div>
+        `).join('');
+    }
+
+    function calcSim() {
+        const hIn = document.querySelectorAll('.h-in');
+        const vIn = document.querySelectorAll('.v-in');
+        let total = 0;
+        hIn.forEach((h, i) => { total += (Number(h.value) * Number(vIn[i].value)); });
+        document.getElementById('sim-total').innerText = total.toLocaleString('pt-br', {style:'currency', currency:'BRL'});
+        const aviso = document.getElementById('aviso-viabil');
+        if (total === 0) { aviso.style.display = "none"; }
+        else if (total < (PISO_ATUAL - 0.05)) {
+            aviso.style.display = "block"; aviso.style.background = "#ffebeb"; aviso.style.color = "#d70015";
+            aviso.innerHTML = `⚠️ ABAIXO DO MÍNIMO: ${PISO_ATUAL.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}`;
+        } else {
+            aviso.style.display = "block"; aviso.style.background = "#eafff0"; aviso.style.color = "#248a3d";
+            aviso.innerHTML = `✅ PROJETO VIÁVEL`;
+        }
+    }
+
+    renderTasks();
+    run();
+</script>
+</body>
+</html>
