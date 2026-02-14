@@ -59,7 +59,6 @@
         }
         .input-row input:focus { border-color: var(--beca-blue); background: #f2faff; }
 
-        /* Headers da Tabela do Simulador */
         .task-header {
             display: grid; grid-template-columns: 2fr 60px 85px; gap: 10px;
             margin-bottom: 5px; padding: 0 5px;
@@ -78,7 +77,7 @@
             width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #e5e5ea;
             text-align: center; font-weight: 700; font-size: 14px; outline: none; box-sizing: border-box;
         }
-        .v-in { text-align: right; } /* Valor alinhado a direita */
+        .v-in { text-align: right; }
         .h-in:focus, .v-in:focus { border-color: var(--beca-red); background: #fff0f1; }
 
         .badge { 
@@ -101,62 +100,23 @@
 
         #aviso-viabil { margin-top: 20px; padding: 15px; border-radius: 12px; font-weight: 700; text-align: center; font-size: 13px; letter-spacing: -0.3px; }
 
-        /* --- ESTILOS DO REPORT (PDF) - DESIGN REFINADO --- */
         .print-header, .footer-print { display: none; }
         
         @media print {
             @page { margin: 1.5cm; size: A4 portrait; }
             body { background: white !important; color: #1c1c1e !important; -webkit-print-color-adjust: exact; }
             header, .nav-tabs, .footer, .tab-btn, #aviso-viabil, #estat { display: none !important; }
-            
             .container { max-width: 100%; padding: 0; margin: 0; }
             .card { box-shadow: none !important; border: none !important; padding: 0; margin: 0; border-radius: 0; }
-            
-            /* Header do PDF */
-            .print-header { 
-                display: flex !important; flex-direction: column; align-items: center; 
-                margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px;
-            }
-            
-            /* Cliente Input vira Título */
-            input#cliente { 
-                font-size: 32px !important; color: #000 !important; margin-bottom: 10px !important; 
-                border-bottom: none !important; padding: 0 !important; font-family: "Times New Roman", serif; /* Toque de elegância */
-            }
-            
-            /* Grid no PDF */
-            h3 { display: none; } /* Esconde o título "Escopo" padrão */
-            
-            .task-header { 
-                border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px;
-                grid-template-columns: 4fr 1fr 1fr !important;
-            }
+            .print-header { display: flex !important; flex-direction: column; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+            input#cliente { font-size: 32px !important; color: #000 !important; margin-bottom: 10px !important; border-bottom: none !important; padding: 0 !important; }
+            h3 { display: none; } 
+            .task-header { border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px; grid-template-columns: 4fr 1fr 1fr !important; }
             .task-header span { color: #000 !important; font-size: 10px !important; }
-            
-            .task-grid { 
-                grid-template-columns: 4fr 1fr 1fr !important; 
-                border-bottom: 1px solid #eee !important; 
-                padding: 10px 0 !important;
-                page-break-inside: avoid;
-            }
-            
-            /* Remove cara de input */
-            .h-in, .v-in { 
-                border: none !important; background: none !important; 
-                text-align: right !important; padding: 0 !important; 
-                font-size: 12px !important; color: #333 !important;
-            }
-            
-            /* Badge vira texto simples */
-            .badge { 
-                border: 1px solid #ccc; color: #555 !important; 
-                background: none !important; padding: 2px 6px; font-weight: normal;
-            }
-
-            .footer-print { 
-                display: block !important; margin-top: 40px; text-align: right; 
-                padding-top: 20px; border-top: 2px solid #000; page-break-inside: avoid;
-            }
+            .task-grid { grid-template-columns: 4fr 1fr 1fr !important; border-bottom: 1px solid #eee !important; padding: 10px 0 !important; page-break-inside: avoid; }
+            .h-in, .v-in { border: none !important; background: none !important; text-align: right !important; padding: 0 !important; font-size: 12px !important; color: #333 !important; }
+            .badge { border: 1px solid #ccc; color: #555 !important; background: none !important; padding: 2px 6px; font-weight: normal; }
+            .footer-print { display: block !important; margin-top: 40px; text-align: right; padding-top: 20px; border-top: 2px solid #000; page-break-inside: avoid; }
         }
     </style>
 </head>
@@ -188,6 +148,11 @@
             </div>
 
             <div id="lista-tarefas"></div>
+
+            <h3>HORAS POR SÓCIO</h3>
+            <div class="calc-line"><span>Paula</span><b id="total-paula">0h</b></div>
+            <div class="calc-line"><span>Rafael</span><b id="total-rafael">0h</b></div>
+            <div class="calc-line"><span>Anaju</span><b id="total-anaju">0h</b></div>
             
             <div id="aviso-viabil"></div>
             
@@ -324,8 +289,29 @@
         const hIn = document.querySelectorAll('.h-in');
         const vIn = document.querySelectorAll('.v-in');
         let total = 0;
-        hIn.forEach((h, i) => { total += (Number(h.value) * Number(vIn[i].value)); });
+        
+        // Objeto para somar as horas por dono
+        let horasSocio = { paula: 0, rafael: 0, anaju: 0 };
+
+        hIn.forEach((h, i) => { 
+            let valorHora = Number(h.value);
+            total += (valorHora * Number(vIn[i].value)); 
+            
+            // Soma no socio correspondente
+            let socio = tarefas[i].p.toLowerCase();
+            if (horasSocio[socio] !== undefined) {
+                horasSocio[socio] += valorHora;
+            }
+        });
+
+        // Atualiza UI de Valores
         document.getElementById('sim-total').innerText = total.toLocaleString('pt-br', {style:'currency', currency:'BRL'});
+        
+        // Atualiza UI de Horas por Sócio
+        document.getElementById('total-paula').innerText = horasSocio.paula + "h";
+        document.getElementById('total-rafael').innerText = horasSocio.rafael + "h";
+        document.getElementById('total-anaju').innerText = horasSocio.anaju + "h";
+
         const aviso = document.getElementById('aviso-viabil');
         if (total === 0) { aviso.style.display = "none"; }
         else if (total < (PISO_ATUAL - 0.05)) {
